@@ -55,7 +55,6 @@ def export_daily_schedule(date_filter: date = Query(alias="date"), db: Session =
             course.teacher.name,
             course.course_type,
             course.duration_hours,
-            course.location or "",
             course.note or "",
         ]
         for course in courses
@@ -64,13 +63,13 @@ def export_daily_schedule(date_filter: date = Query(alias="date"), db: Session =
     rows.extend(
         [
             [],
-            ["统计", "", "", "总时长", total_hours, "", ""],
+            ["统计", "", "", "总时长", total_hours, ""],
         ]
     )
 
     return make_csv_response(
         f"每日总课表-{date_filter}.csv",
-        ["上课时间", "学生姓名", "老师姓名", "课程类型", "时长", "线上链接/地点", "备注"],
+        ["上课时间", "学生姓名", "老师姓名", "课程类型", "时长", "备注"],
         rows,
     )
 
@@ -107,7 +106,6 @@ def export_student_schedule(
             course.course_type,
             course.teacher.name,
             course.duration_hours,
-            course.location or "",
             course.note or "",
         ]
         for course in courses
@@ -116,13 +114,13 @@ def export_student_schedule(
     rows.extend(
         [
             [],
-            ["统计", "", "总时长", "", total_hours, "", ""],
+            ["统计", "", "总时长", "", total_hours, ""],
         ]
     )
 
     return make_csv_response(
         f"{student.name}-课表-{start_date}_至_{end_date}.csv",
-        ["日期", "上课时间", "课程类型", "老师姓名", "时长", "线上链接/地点", "备注"],
+        ["日期", "上课时间", "课程类型", "老师姓名", "时长", "备注"],
         rows,
     )
 
@@ -163,7 +161,6 @@ def export_teacher_monthly_schedule(
             course.student.name,
             course.course_type,
             course.duration_hours,
-            course.location or "",
             course.note or "",
         ]
         for course in courses
@@ -173,13 +170,13 @@ def export_teacher_monthly_schedule(
     rows.extend(
         [
             [],
-            ["统计", "", "", "", "当月总课程数", len(courses), "", ""],
-            ["统计", "", "", "", "当月总课时数", total_hours, "", ""],
+            ["统计", "", "", "", "当月总课程数", len(courses), ""],
+            ["统计", "", "", "", "当月总课时数", total_hours, ""],
         ]
     )
 
     return make_csv_response(
         f"{teacher.name}-{month}-月度课表.csv",
-        ["日期", "开始时间", "结束时间", "学生姓名", "课程类型", "时长", "线上链接/地点", "备注"],
+        ["日期", "开始时间", "结束时间", "学生姓名", "课程类型", "时长", "备注"],
         rows,
     )

@@ -3,7 +3,7 @@
     <div class="page-header">
       <div>
         <h1>老师管理</h1>
-        <p>维护老师姓名、科目和联系方式。</p>
+        <p>维护老师姓名、科目和备注。</p>
       </div>
     </div>
 
@@ -21,10 +21,6 @@
           <label>
             教授科目
             <input v-model.trim="form.subject" required placeholder="听力、阅读、写作、口语或自定义" />
-          </label>
-          <label>
-            联系方式
-            <input v-model.trim="form.phone" placeholder="手机或微信，可选" />
           </label>
           <label>
             备注
@@ -66,7 +62,6 @@
                 </th>
                 <th>姓名</th>
                 <th>科目</th>
-                <th>联系方式</th>
                 <th>备注</th>
                 <th>操作</th>
               </tr>
@@ -78,7 +73,6 @@
                 </td>
                 <td data-label="姓名">{{ teacher.name }}</td>
                 <td data-label="科目"><span class="tag">{{ teacher.subject }}</span></td>
-                <td data-label="联系方式">{{ teacher.phone || '-' }}</td>
                 <td data-label="备注">{{ teacher.note || '-' }}</td>
                 <td data-label="操作" class="actions">
                   <button class="link-button" @click="editTeacher(teacher)">编辑</button>
@@ -86,7 +80,7 @@
                 </td>
               </tr>
               <tr v-if="teachers.length === 0">
-                <td :colspan="selectionMode ? 6 : 5" class="empty">暂无老师</td>
+                <td :colspan="selectionMode ? 5 : 4" class="empty">暂无老师</td>
               </tr>
             </tbody>
           </table>
@@ -115,7 +109,6 @@ const bulkNote = ref('')
 const form = reactive({
   name: '',
   subject: '',
-  phone: '',
   note: ''
 })
 
@@ -126,7 +119,7 @@ function resetNotice() {
 
 function resetForm() {
   editingId.value = null
-  Object.assign(form, { name: '', subject: '', phone: '', note: '' })
+  Object.assign(form, { name: '', subject: '', note: '' })
 }
 
 const allSelected = computed(() => teachers.value.length > 0 && selectedIds.value.length === teachers.value.length)
@@ -237,7 +230,6 @@ function editTeacher(teacher) {
   Object.assign(form, {
     name: teacher.name,
     subject: teacher.subject,
-    phone: teacher.phone || '',
     note: teacher.note || ''
   })
 }

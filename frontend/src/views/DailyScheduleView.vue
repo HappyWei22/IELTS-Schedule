@@ -38,7 +38,6 @@
               <th>老师</th>
               <th>课程类型</th>
               <th>时长</th>
-              <th>线上链接/地点</th>
               <th>备注</th>
               <th>提醒</th>
             </tr>
@@ -50,17 +49,13 @@
               <td data-label="老师">{{ course.teacher_name }}</td>
               <td data-label="课程类型"><span class="tag">{{ course.course_type }}</span></td>
               <td data-label="时长">{{ course.duration_hours }} 小时</td>
-              <td data-label="线上链接/地点">
-                <a v-if="isLink(course.location)" :href="course.location" target="_blank" rel="noreferrer">打开</a>
-                <span v-else>{{ course.location || '-' }}</span>
-              </td>
               <td data-label="备注">{{ course.note || '-' }}</td>
               <td data-label="提醒">
                 <button class="link-button" @click="copyReminder(course)">复制</button>
               </td>
             </tr>
             <tr v-if="courses.length === 0">
-              <td colspan="8" class="empty">当天暂无课程</td>
+              <td colspan="7" class="empty">当天暂无课程</td>
             </tr>
           </tbody>
         </table>
@@ -95,10 +90,6 @@ function resetNotice() {
 
 function formatTime(value) {
   return value ? value.slice(0, 5) : ''
-}
-
-function isLink(value) {
-  return /^https?:\/\//i.test(value || '')
 }
 
 function formatChineseDate(dateValue) {

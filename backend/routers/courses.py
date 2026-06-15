@@ -27,7 +27,6 @@ def course_to_out(course: models.Course) -> schemas.CourseOut:
         start_time=course.start_time,
         end_time=course.end_time,
         duration_hours=course.duration_hours,
-        location=course.location,
         note=course.note,
         created_at=course.created_at,
         updated_at=course.updated_at,

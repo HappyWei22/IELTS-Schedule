@@ -38,7 +38,7 @@
                 @click="selectStudent(student)"
               >
                 <strong>{{ student.name }}</strong>
-                <span>{{ student.phone || '无联系方式' }} · {{ student.status }}</span>
+                <span>{{ student.status }}</span>
               </button>
               <div v-if="filteredStudents.length === 0" class="search-empty">
                 没有找到匹配学生，请先到学生管理新增。
@@ -73,16 +73,10 @@
           </label>
         </div>
 
-        <div class="two-columns">
-          <label>
-            结束时间
-            <input v-model="form.end_time" type="time" required />
-          </label>
-          <label>
-            线上链接/地点
-            <input v-model.trim="form.location" placeholder="可选" />
-          </label>
-        </div>
+        <label>
+          结束时间
+          <input v-model="form.end_time" type="time" required />
+        </label>
 
         <label>
           备注
@@ -122,7 +116,6 @@
                 <th>老师</th>
                 <th>课程</th>
                 <th>时长</th>
-                <th>线上链接/地点</th>
                 <th>备注</th>
                 <th>操作</th>
               </tr>
@@ -135,10 +128,6 @@
                 <td data-label="老师">{{ course.teacher_name }}</td>
                 <td data-label="课程"><span class="tag">{{ course.course_type }}</span></td>
                 <td data-label="时长">{{ course.duration_hours }} 小时</td>
-                <td data-label="线上链接/地点">
-                  <a v-if="isLink(course.location)" :href="course.location" target="_blank" rel="noreferrer">打开</a>
-                  <span v-else>{{ course.location || '-' }}</span>
-                </td>
                 <td data-label="备注">{{ course.note || '-' }}</td>
                 <td data-label="操作" class="actions">
                   <button class="link-button" @click="editCourse(course)">编辑</button>
@@ -146,7 +135,7 @@
                 </td>
               </tr>
               <tr v-if="courses.length === 0">
-                <td colspan="9" class="empty">暂无课程</td>
+                <td colspan="8" class="empty">暂无课程</td>
               </tr>
             </tbody>
           </table>
@@ -180,7 +169,6 @@ const form = reactive({
   course_date: '',
   start_time: '',
   end_time: '',
-  location: '',
   note: ''
 })
 
@@ -195,7 +183,7 @@ const filteredStudents = computed(() => {
   const keyword = studentSearch.value.trim().toLowerCase()
   const list = keyword
     ? students.value.filter((student) =>
-        [student.name, student.phone, student.status].some((value) => String(value || '').toLowerCase().includes(keyword))
+        [student.name, student.status].some((value) => String(value || '').toLowerCase().includes(keyword))
       )
     : students.value
   return list.slice(0, 8)
@@ -208,10 +196,6 @@ function resetNotice() {
 
 function formatTime(value) {
   return value ? value.slice(0, 5) : ''
-}
-
-function isLink(value) {
-  return /^https?:\/\//i.test(value || '')
 }
 
 function addTwoHours(timeValue) {
@@ -251,7 +235,6 @@ function resetForm() {
     course_date: '',
     start_time: '',
     end_time: '',
-    location: '',
     note: ''
   })
 }
@@ -314,7 +297,6 @@ function editCourse(course) {
     course_date: course.course_date,
     start_time: formatTime(course.start_time),
     end_time: formatTime(course.end_time),
-    location: course.location || '',
     note: course.note || ''
   })
 }

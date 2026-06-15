@@ -58,7 +58,6 @@
               <th>学生</th>
               <th>课程类型</th>
               <th>时长</th>
-              <th>线上链接/地点</th>
               <th>备注</th>
             </tr>
             </thead>
@@ -70,14 +69,10 @@
               <td data-label="学生">{{ course.student_name }}</td>
               <td data-label="课程类型"><span class="tag">{{ course.course_type }}</span></td>
               <td data-label="时长">{{ course.duration_hours }} 小时</td>
-              <td data-label="线上链接/地点">
-                <a v-if="isLink(course.location)" :href="course.location" target="_blank" rel="noreferrer">打开</a>
-                <span v-else>{{ course.location || '-' }}</span>
-              </td>
               <td data-label="备注">{{ course.note || '-' }}</td>
             </tr>
             <tr v-if="courses.length === 0">
-              <td colspan="8" class="empty">暂无课程</td>
+              <td colspan="7" class="empty">暂无课程</td>
             </tr>
           </tbody>
         </table>
@@ -115,10 +110,6 @@ const selectedMonth = ref(toMonthInput(new Date()))
 
 function formatTime(value) {
   return value ? value.slice(0, 5) : ''
-}
-
-function isLink(value) {
-  return /^https?:\/\//i.test(value || '')
 }
 
 function resetSummary() {

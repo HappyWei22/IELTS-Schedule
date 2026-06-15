@@ -93,11 +93,11 @@
       <div class="action-grid">
         <RouterLink class="action-tile" to="/students">
           <strong>录入学生</strong>
-          <span>维护状态、联系方式和备注</span>
+          <span>维护状态和备注</span>
         </RouterLink>
         <RouterLink class="action-tile" to="/teachers">
           <strong>录入老师</strong>
-          <span>维护授课科目和联系方式</span>
+          <span>维护授课科目和备注</span>
         </RouterLink>
         <RouterLink class="action-tile primary" to="/courses">
           <strong>安排课程</strong>

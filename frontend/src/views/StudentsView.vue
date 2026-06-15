@@ -19,10 +19,6 @@
             <input v-model.trim="form.name" required placeholder="例如：李同学" />
           </label>
           <label>
-            联系方式
-            <input v-model.trim="form.phone" placeholder="手机或微信，可选" />
-          </label>
-          <label>
             当前状态
             <select v-model="form.status">
               <option>在读</option>
@@ -74,7 +70,6 @@
                   <input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)" />
                 </th>
                 <th>姓名</th>
-                <th>联系方式</th>
                 <th>状态</th>
                 <th>备注</th>
                 <th>操作</th>
@@ -86,7 +81,6 @@
                   <input v-model="selectedIds" type="checkbox" :value="student.id" />
                 </td>
                 <td data-label="姓名">{{ student.name }}</td>
-                <td data-label="联系方式">{{ student.phone || '-' }}</td>
                 <td data-label="状态"><span class="tag" :class="statusClass(student.status)">{{ student.status }}</span></td>
                 <td data-label="备注">{{ student.note || '-' }}</td>
                 <td data-label="操作" class="actions">
@@ -95,7 +89,7 @@
                 </td>
               </tr>
               <tr v-if="students.length === 0">
-                <td :colspan="selectionMode ? 6 : 5" class="empty">暂无学生</td>
+                <td :colspan="selectionMode ? 5 : 4" class="empty">暂无学生</td>
               </tr>
             </tbody>
           </table>
@@ -123,7 +117,6 @@ const bulkStatus = ref('')
 const bulkNote = ref('')
 const form = reactive({
   name: '',
-  phone: '',
   status: '在读',
   note: ''
 })
@@ -135,7 +128,7 @@ function resetNotice() {
 
 function resetForm() {
   editingId.value = null
-  Object.assign(form, { name: '', phone: '', status: '在读', note: '' })
+  Object.assign(form, { name: '', status: '在读', note: '' })
 }
 
 function statusClass(status) {
@@ -253,7 +246,6 @@ function editStudent(student) {
   editingId.value = student.id
   Object.assign(form, {
     name: student.name,
-    phone: student.phone || '',
     status: student.status,
     note: student.note || ''
   })

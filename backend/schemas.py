@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field, field_validator
 
 class StudentBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
-    phone: str | None = None
     status: str = "在读"
     note: str | None = None
 
@@ -42,7 +41,6 @@ class BulkActionResult(BaseModel):
 class TeacherBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     subject: str = Field(..., min_length=1, max_length=100)
-    phone: str | None = None
     note: str | None = None
 
 
@@ -74,7 +72,6 @@ class CourseBase(BaseModel):
     course_date: date
     start_time: time
     end_time: time | None = None
-    location: str | None = None
     note: str | None = None
 
     @field_validator("end_time")
@@ -104,7 +101,6 @@ class CourseOut(BaseModel):
     start_time: time
     end_time: time
     duration_hours: float
-    location: str | None
     note: str | None
     created_at: datetime
     updated_at: datetime
