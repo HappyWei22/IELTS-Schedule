@@ -15,6 +15,18 @@
         <input v-model="selectedDate" type="date" />
         <button class="button button-primary" @click="loadSchedule">查看课表</button>
         <button class="button" @click="copyAllReminders" :disabled="courses.length === 0">复制全部提醒</button>
+        <button class="button" @click="downloadCsv">导出 CSV</button>
+      </div>
+
+      <div class="summary-strip">
+        <div class="summary-item">
+          <span>当天课程数</span>
+          <strong>{{ courses.length }} 节</strong>
+        </div>
+        <div class="summary-item">
+          <span>总时长</span>
+          <strong>{{ totalHours }} 小时</strong>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -30,20 +42,20 @@
               <th>备注</th>
               <th>提醒</th>
             </tr>
-          </thead>
-          <tbody>
-            <tr v-for="course in courses" :key="course.id">
-              <td>{{ formatTime(course.start_time) }}-{{ formatTime(course.end_time) }}</td>
-              <td>{{ course.student_name }}</td>
-              <td>{{ course.teacher_name }}</td>
-              <td><span class="tag">{{ course.course_type }}</span></td>
-              <td>{{ course.duration_hours }} 小时</td>
-              <td>
+            </thead>
+            <tbody>
+              <tr v-for="course in courses" :key="course.id">
+              <td data-label="上课时间">{{ formatTime(course.start_time) }}-{{ formatTime(course.end_time) }}</td>
+              <td data-label="学生">{{ course.student_name }}</td>
+              <td data-label="老师">{{ course.teacher_name }}</td>
+              <td data-label="课程类型"><span class="tag">{{ course.course_type }}</span></td>
+              <td data-label="时长">{{ course.duration_hours }} 小时</td>
+              <td data-label="线上链接/地点">
                 <a v-if="isLink(course.location)" :href="course.location" target="_blank" rel="noreferrer">打开</a>
                 <span v-else>{{ course.location || '-' }}</span>
               </td>
-              <td>{{ course.note || '-' }}</td>
-              <td>
+              <td data-label="备注">{{ course.note || '-' }}</td>
+              <td data-label="提醒">
                 <button class="link-button" @click="copyReminder(course)">复制</button>
               </td>
             </tr>
@@ -58,7 +70,8 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { exportDailySchedule } from '../api/exports'
 import { getErrorMessage } from '../api/http'
 import { fetchDailySchedule } from '../api/schedules'
 
@@ -73,6 +86,7 @@ const selectedDate = ref(toDateInput(new Date()))
 const courses = ref([])
 const error = ref('')
 const message = ref('')
+const totalHours = computed(() => courses.value.reduce((sum, course) => sum + Number(course.duration_hours || 0), 0).toFixed(2))
 
 function resetNotice() {
   error.value = ''
@@ -122,6 +136,21 @@ async function loadSchedule() {
     courses.value = res.data
   } catch (err) {
     error.value = getErrorMessage(err, '每日课表加载失败。')
+  }
+}
+
+async function downloadCsv() {
+  resetNotice()
+  if (!selectedDate.value) {
+    error.value = '请先选择日期。'
+    return
+  }
+
+  try {
+    await exportDailySchedule(selectedDate.value)
+    message.value = 'CSV 文件已开始下载。'
+  } catch (err) {
+    error.value = getErrorMessage(err, '每日课表导出失败。')
   }
 }
 

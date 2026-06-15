@@ -6,6 +6,7 @@ import CoursesView from '../views/CoursesView.vue'
 import DailyScheduleView from '../views/DailyScheduleView.vue'
 import StudentScheduleView from '../views/StudentScheduleView.vue'
 import TeacherMonthlyView from '../views/TeacherMonthlyView.vue'
+import HelpView from '../views/HelpView.vue'
 
 const routes = [
   { path: '/', name: 'dashboard', component: DashboardView },
@@ -14,7 +15,8 @@ const routes = [
   { path: '/courses', name: 'courses', component: CoursesView },
   { path: '/daily-schedule', name: 'daily-schedule', component: DailyScheduleView },
   { path: '/student-schedule', name: 'student-schedule', component: StudentScheduleView },
-  { path: '/teacher-monthly', name: 'teacher-monthly', component: TeacherMonthlyView }
+  { path: '/teacher-monthly', name: 'teacher-monthly', component: TeacherMonthlyView },
+  { path: '/help', name: 'help', component: HelpView }
 ]
 
 const router = createRouter({

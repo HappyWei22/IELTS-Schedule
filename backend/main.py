@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 import models
 from database import Base, engine
-from routers import courses, schedules, students, teachers
+from routers import courses, exports, schedules, students, teachers
 
 Base.metadata.create_all(bind=engine)
 
@@ -15,12 +15,14 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 app.include_router(students.router)
 app.include_router(teachers.router)
 app.include_router(courses.router)
 app.include_router(schedules.router)
+app.include_router(exports.router)
 
 
 @app.get("/")

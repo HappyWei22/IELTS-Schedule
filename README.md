@@ -2,7 +2,7 @@
 
 这是一个前后端分离的本地可运行项目，用于雅思培训机构助教或教学主管管理学生、老师和课程排课。
 
-当前已完成第一阶段和第二阶段：
+当前已完成第一阶段、第二阶段、第三阶段和第四阶段：
 
 - 学生管理：新增、编辑、删除、列表、按姓名搜索
 - 老师管理：新增、编辑、删除、列表、按姓名搜索
@@ -12,6 +12,12 @@
 - 每日总课表：按日期查看当天全部课程，按时间排序，可复制提醒消息
 - 学生个人课表：按学生和日期范围查看课程
 - 老师月度统计：按老师和月份查看课程、总课程数、总课时数、按课程类型统计课时
+- CSV 导出：每日总课表、学生个人课表、老师月度课表均可导出 CSV
+- 页面优化：统一产品级视觉系统、工作台首页、加载/空态/错误提示、响应式布局
+- 使用指南：新增助教操作流程、冲突规则和常见检查入口
+- 移动端适配：窄屏下保留高密度表格，并提供横向滑动提示
+- 批量管理：学生和老师支持勾选后批量修改、批量删除
+- 状态颜色：学生状态按在读、暂停、结课显示不同颜色
 
 ## 技术栈
 
@@ -66,7 +72,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-如果 `pip install -r requirements.txt` 出现 SSL 证书错误，请先看下面“常见问题”里的 macOS pip SSL 解决方法。
+项目已经在 `backend/requirements.txt` 中加入本地开发用的 PyPI 可信主机配置，用来规避 macOS 常见的 pip SSL 证书问题。通常直接运行 `pip install -r requirements.txt` 即可。
 
 后端地址：
 
@@ -132,6 +138,60 @@ npm run dev
 8. 进入“每日总课表”，选择日期查看当天全部课程。
 9. 进入“学生课表”，选择学生和日期范围查看个人课表。
 10. 进入“老师月度统计”，选择老师和月份查看课时统计。
+11. 在三个课表页面点击“导出 CSV”，确认浏览器下载 CSV 文件。
+12. 进入“使用指南”，确认操作流程、冲突规则和快捷入口可正常查看。
+13. 在学生管理或老师管理中勾选多条记录，确认可以批量修改或批量删除。
+
+## 从 Excel 导入 7 月课时数据
+
+项目已经提供导入脚本：
+
+```text
+backend/scripts/import_july_xlsx.py
+```
+
+默认导入文件：
+
+```text
+/Users/sxw/工作/7月课时.xlsx
+```
+
+导入规则：
+
+- 学生按姓名去重导入。
+- 老师按姓名去重导入。
+- 课程只导入 `2025-07` 中能解析出日期和时间段的记录。
+- 重复运行时，已存在的同一学生、同一老师、同一科目、同一天、同一时间段课程会自动跳过。
+- 导入前会自动备份数据库，备份文件保存在 `backend/` 目录。
+
+导入 Excel 前需要额外安装导入依赖：
+
+```bash
+cd "/Users/sxw/Documents/IELTS Schedule/ielts-scheduler/backend"
+source .venv/bin/activate
+pip install -r requirements-import.txt
+```
+
+先预览，不写入数据库：
+
+```bash
+cd "/Users/sxw/Documents/IELTS Schedule/ielts-scheduler"
+python backend/scripts/import_july_xlsx.py --dry-run
+```
+
+正式导入：
+
+```bash
+cd "/Users/sxw/Documents/IELTS Schedule/ielts-scheduler"
+python backend/scripts/import_july_xlsx.py
+```
+
+如果你使用的是 Codex 内置 Python，也可以运行：
+
+```bash
+cd "/Users/sxw/Documents/IELTS Schedule/ielts-scheduler"
+/Users/sxw/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 backend/scripts/import_july_xlsx.py
+```
 
 ## 第一阶段验收测试
 
@@ -180,12 +240,62 @@ npm run dev
    - 选择老师和月份，例如 `2026-06`。
    - 结果：应看到当月总课程数、总课时数、按课程类型统计课时，以及每节课明细。
 
+## 第三阶段验收测试
+
+建议先确保后端和前端都已经启动，并且系统里已有课程数据：
+
+1. 进入“每日总课表”。
+   - 选择有课程的日期。
+   - 点击“导出 CSV”。
+   - 结果：浏览器应下载 `每日总课表-日期.csv`，字段包含上课时间、学生姓名、老师姓名、课程类型、时长、线上链接/地点、备注，并在文件底部包含总时长。
+2. 进入“学生课表”。
+   - 选择学生和日期范围。
+   - 点击“导出 CSV”。
+   - 结果：浏览器应下载该学生课表 CSV，字段包含日期、上课时间、课程类型、老师姓名、时长、线上链接/地点、备注，并在文件底部包含总时长。
+3. 进入“老师月度统计”。
+   - 选择老师和月份。
+   - 点击“导出 CSV”。
+   - 结果：浏览器应下载老师月度课表 CSV，字段包含日期、开始时间、结束时间、学生姓名、课程类型、时长、线上链接/地点、备注，并在文件底部包含总课程数和总课时数。
+4. 用 Excel、Numbers 或 WPS 打开 CSV。
+   - 结果：中文应正常显示，不应乱码。
+
+## 第四阶段验收测试
+
+1. 打开首页。
+   - 结果：应看到“今日工作台”、今日课程、本月课程、学生数量、老师数量、今日课程列表、近期安排和常用操作入口。
+2. 在侧边栏切换页面。
+   - 结果：导航按“日常工作 / 资料与统计 / 支持”分组，当前页面高亮清晰。
+3. 进入学生、老师、排课页面并保存表单。
+   - 结果：保存按钮会显示“保存中...”，成功或失败提示清晰。
+4. 进入每日总课表和学生课表。
+   - 结果：页面会展示课程数和总时长，和 CSV 导出统计一致。
+5. 缩小浏览器宽度到手机或平板尺寸。
+   - 结果：侧边栏会变成横向导航，表单和统计模块会单列显示，不应出现文字重叠。
+6. 进入“使用指南”。
+   - 结果：应看到推荐工作流、冲突规则、常见检查和快捷入口。
+7. 在手机宽度下进入学生管理、老师管理、排课管理。
+   - 结果：右侧表格应保持高密度表格样式，并显示横向滑动提示，方便查看更多列。
+8. 在学生管理中查看状态标签。
+   - 结果：在读为绿色，暂停为橙色，结课为红色。
+9. 在学生管理中勾选多个学生。
+   - 选择批量状态或填写批量备注后点击“批量修改”。
+   - 结果：提交后应提示修改数量，学生列表刷新。
+10. 在学生管理中勾选没有课程关联的学生后点击“批量删除”。
+   - 结果：提交后应提示删除数量；如果有关联课程，系统应阻止删除并提示具体学生。
+11. 在老师管理中勾选多个老师。
+   - 填写批量科目或批量备注后点击“批量修改”。
+   - 结果：提交后应提示修改数量，老师列表刷新。
+12. 在老师管理中勾选没有课程关联的老师后点击“批量删除”。
+   - 结果：提交后应提示删除数量；如果有关联课程，系统应阻止删除并提示具体老师。
+
 ## 已实现接口
 
 学生接口：
 
 - `GET /api/students?keyword=`
 - `POST /api/students`
+- `PUT /api/students/bulk`
+- `POST /api/students/bulk-delete`
 - `PUT /api/students/{id}`
 - `DELETE /api/students/{id}`
 
@@ -193,6 +303,8 @@ npm run dev
 
 - `GET /api/teachers?keyword=`
 - `POST /api/teachers`
+- `PUT /api/teachers/bulk`
+- `POST /api/teachers/bulk-delete`
 - `PUT /api/teachers/{id}`
 - `DELETE /api/teachers/{id}`
 
@@ -209,6 +321,12 @@ npm run dev
 - `GET /api/schedules/daily?date=YYYY-MM-DD`
 - `GET /api/schedules/student/{student_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
 - `GET /api/schedules/teacher/{teacher_id}/monthly?month=YYYY-MM`
+
+导出接口：
+
+- `GET /api/export/daily?date=YYYY-MM-DD`
+- `GET /api/export/student/{student_id}?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD`
+- `GET /api/export/teacher/{teacher_id}/monthly?month=YYYY-MM`
 
 ## 冲突检测规则
 
@@ -262,7 +380,15 @@ SSLError(SSLCertVerificationError: certificate verify failed)
 Could not fetch URL https://pypi.org/simple/fastapi/
 ```
 
-这通常是 macOS 上 Python 的证书没有正确安装。优先尝试下面的方法：
+项目已经把可信主机配置写入 `backend/requirements.txt`，请先确认你是在后端目录运行：
+
+```bash
+cd "/Users/sxw/Documents/IELTS Schedule/ielts-scheduler/backend"
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+如果仍然失败，通常是 macOS 上 Python 的证书没有正确安装。可以再尝试下面的方法：
 
 ```bash
 open "/Applications/Python 3.12/Install Certificates.command"
@@ -288,7 +414,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-如果仍然失败，可以临时使用可信主机方式安装：
+也可以直接使用可信主机方式安装：
 
 ```bash
 pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -r requirements.txt
@@ -348,15 +474,16 @@ backend/ielts_scheduler.db
 - 学生个人课表
 - 老师月度课表
 
-第三阶段将继续实现：
+第三阶段已完成：
 
 - 每日课表 CSV 导出
 - 学生课表 CSV 导出
 - 老师月度课表 CSV 导出
 
-第四阶段将继续优化：
+第四阶段已完成：
 
 - 页面布局
 - 表单体验
 - 错误提示
 - 仪表盘展示
+- 使用指南页面

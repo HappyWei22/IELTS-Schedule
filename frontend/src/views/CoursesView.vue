@@ -67,7 +67,9 @@
         </label>
 
         <div class="button-row">
-          <button class="button button-primary" type="submit">{{ editingId ? '保存修改' : '新增课程' }}</button>
+          <button class="button button-primary" type="submit" :disabled="submitting">
+            {{ submitting ? '保存中...' : editingId ? '保存修改' : '新增课程' }}
+          </button>
           <button v-if="editingId" class="button" type="button" @click="resetForm">取消编辑</button>
         </div>
       </form>
@@ -104,18 +106,18 @@
             </thead>
             <tbody>
               <tr v-for="course in courses" :key="course.id">
-                <td>{{ course.course_date }}</td>
-                <td>{{ formatTime(course.start_time) }}-{{ formatTime(course.end_time) }}</td>
-                <td>{{ course.student_name }}</td>
-                <td>{{ course.teacher_name }}</td>
-                <td><span class="tag">{{ course.course_type }}</span></td>
-                <td>{{ course.duration_hours }} 小时</td>
-                <td>
+                <td data-label="日期">{{ course.course_date }}</td>
+                <td data-label="时间">{{ formatTime(course.start_time) }}-{{ formatTime(course.end_time) }}</td>
+                <td data-label="学生">{{ course.student_name }}</td>
+                <td data-label="老师">{{ course.teacher_name }}</td>
+                <td data-label="课程"><span class="tag">{{ course.course_type }}</span></td>
+                <td data-label="时长">{{ course.duration_hours }} 小时</td>
+                <td data-label="线上链接/地点">
                   <a v-if="isLink(course.location)" :href="course.location" target="_blank" rel="noreferrer">打开</a>
                   <span v-else>{{ course.location || '-' }}</span>
                 </td>
-                <td>{{ course.note || '-' }}</td>
-                <td class="actions">
+                <td data-label="备注">{{ course.note || '-' }}</td>
+                <td data-label="操作" class="actions">
                   <button class="link-button" @click="editCourse(course)">编辑</button>
                   <button class="link-button danger" @click="removeCourse(course)">删除</button>
                 </td>
@@ -144,6 +146,7 @@ const courses = ref([])
 const editingId = ref(null)
 const error = ref('')
 const message = ref('')
+const submitting = ref(false)
 
 const form = reactive({
   student_id: '',
@@ -221,6 +224,7 @@ async function loadCourses() {
 
 async function submitForm() {
   resetNotice()
+  submitting.value = true
   try {
     const payload = {
       ...form,
@@ -239,6 +243,8 @@ async function submitForm() {
     await loadCourses()
   } catch (err) {
     error.value = getErrorMessage(err, '课程保存失败。')
+  } finally {
+    submitting.value = false
   }
 }
 

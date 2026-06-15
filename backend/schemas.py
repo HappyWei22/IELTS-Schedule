@@ -25,6 +25,20 @@ class StudentOut(StudentBase):
     model_config = {"from_attributes": True}
 
 
+class BulkIds(BaseModel):
+    ids: list[int] = Field(..., min_length=1)
+
+
+class StudentBulkUpdate(BaseModel):
+    ids: list[int] = Field(..., min_length=1)
+    status: str | None = None
+    note: str | None = None
+
+
+class BulkActionResult(BaseModel):
+    affected_count: int
+
+
 class TeacherBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
     subject: str = Field(..., min_length=1, max_length=100)
@@ -45,6 +59,12 @@ class TeacherOut(TeacherBase):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class TeacherBulkUpdate(BaseModel):
+    ids: list[int] = Field(..., min_length=1)
+    subject: str | None = None
+    note: str | None = None
 
 
 class CourseBase(BaseModel):

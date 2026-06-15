@@ -7,6 +7,7 @@
       </div>
     </div>
 
+    <div v-if="message" class="alert alert-success">{{ message }}</div>
     <div v-if="error" class="alert alert-error">{{ error }}</div>
 
     <div class="panel">
@@ -20,6 +21,18 @@
         <button class="button button-primary" @click="loadSchedule">查看课表</button>
         <button class="button" @click="setThisWeek">本周</button>
         <button class="button" @click="setThisMonth">本月</button>
+        <button class="button" @click="downloadCsv">导出 CSV</button>
+      </div>
+
+      <div class="summary-strip">
+        <div class="summary-item">
+          <span>范围内课程</span>
+          <strong>{{ courses.length }} 节</strong>
+        </div>
+        <div class="summary-item">
+          <span>总时长</span>
+          <strong>{{ totalHours }} 小时</strong>
+        </div>
       </div>
 
       <div class="table-wrap">
@@ -30,24 +43,26 @@
               <th>上课时间</th>
               <th>课程类型</th>
               <th>老师</th>
+              <th>时长</th>
               <th>线上链接/地点</th>
               <th>备注</th>
             </tr>
-          </thead>
-          <tbody>
+            </thead>
+            <tbody>
             <tr v-for="course in courses" :key="course.id">
-              <td>{{ course.course_date }}</td>
-              <td>{{ formatTime(course.start_time) }}-{{ formatTime(course.end_time) }}</td>
-              <td><span class="tag">{{ course.course_type }}</span></td>
-              <td>{{ course.teacher_name }}</td>
-              <td>
+              <td data-label="日期">{{ course.course_date }}</td>
+              <td data-label="上课时间">{{ formatTime(course.start_time) }}-{{ formatTime(course.end_time) }}</td>
+              <td data-label="课程类型"><span class="tag">{{ course.course_type }}</span></td>
+              <td data-label="老师">{{ course.teacher_name }}</td>
+              <td data-label="时长">{{ course.duration_hours }} 小时</td>
+              <td data-label="线上链接/地点">
                 <a v-if="isLink(course.location)" :href="course.location" target="_blank" rel="noreferrer">打开</a>
                 <span v-else>{{ course.location || '-' }}</span>
               </td>
-              <td>{{ course.note || '-' }}</td>
+              <td data-label="备注">{{ course.note || '-' }}</td>
             </tr>
             <tr v-if="courses.length === 0">
-              <td colspan="6" class="empty">暂无课程</td>
+              <td colspan="7" class="empty">暂无课程</td>
             </tr>
           </tbody>
         </table>
@@ -57,7 +72,8 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { exportStudentSchedule } from '../api/exports'
 import { getErrorMessage } from '../api/http'
 import { fetchStudentSchedule } from '../api/schedules'
 import { fetchStudents } from '../api/students'
@@ -68,6 +84,8 @@ const selectedStudentId = ref('')
 const startDate = ref('')
 const endDate = ref('')
 const error = ref('')
+const message = ref('')
+const totalHours = computed(() => courses.value.reduce((sum, course) => sum + Number(course.duration_hours || 0), 0).toFixed(2))
 
 function toDateInput(date) {
   const year = date.getFullYear()
@@ -110,6 +128,7 @@ async function loadStudents() {
 
 async function loadSchedule() {
   error.value = ''
+  message.value = ''
   courses.value = []
   if (!selectedStudentId.value) {
     error.value = '请先选择学生。'
@@ -125,6 +144,26 @@ async function loadSchedule() {
     courses.value = res.data
   } catch (err) {
     error.value = getErrorMessage(err, '学生课表加载失败。')
+  }
+}
+
+async function downloadCsv() {
+  error.value = ''
+  message.value = ''
+  if (!selectedStudentId.value) {
+    error.value = '请先选择学生。'
+    return
+  }
+  if (!startDate.value || !endDate.value) {
+    error.value = '请选择开始日期和结束日期。'
+    return
+  }
+
+  try {
+    await exportStudentSchedule(selectedStudentId.value, startDate.value, endDate.value)
+    message.value = 'CSV 文件已开始下载。'
+  } catch (err) {
+    error.value = getErrorMessage(err, '学生课表导出失败。')
   }
 }
 
