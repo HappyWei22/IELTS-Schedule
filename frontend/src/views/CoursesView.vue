@@ -29,6 +29,14 @@
               <span>已选：{{ selectedStudent.name }}</span>
               <button type="button" class="link-button" @click="clearSelectedStudent">更换</button>
             </div>
+            <button
+              v-if="!quickStudentOpen && !selectedStudent"
+              type="button"
+              class="inline-add-button"
+              @click="openQuickStudentForm"
+            >
+              + 新增学生并用于本次排课
+            </button>
             <div v-if="studentPickerOpen" class="search-results">
               <button
                 v-for="student in filteredStudents"
@@ -41,7 +49,47 @@
                 <span>{{ student.status }}</span>
               </button>
               <div v-if="filteredStudents.length === 0" class="search-empty">
-                没有找到匹配学生，请先到学生管理新增。
+                没有找到匹配学生，可以直接在这里新增。
+              </div>
+            </div>
+            <div v-if="quickStudentOpen" class="quick-create-box" @keydown.enter.prevent="createStudentInline">
+              <div class="quick-create-header">
+                <strong>新增学生</strong>
+                <button type="button" class="link-button" @click="closeQuickStudentForm">收起</button>
+              </div>
+              <label>
+                学生姓名
+                <input
+                  v-model.trim="quickStudent.name"
+                  autocomplete="off"
+                  placeholder="例如：李同学"
+                  @keydown.enter.prevent="createStudentInline"
+                />
+              </label>
+              <div class="two-columns">
+                <label>
+                  当前状态
+                  <select v-model="quickStudent.status">
+                    <option value="在读">在读</option>
+                    <option value="暂停">暂停</option>
+                    <option value="结课">结课</option>
+                  </select>
+                </label>
+                <label>
+                  备注
+                  <input v-model.trim="quickStudent.note" placeholder="可选" />
+                </label>
+              </div>
+              <div class="button-row">
+                <button
+                  type="button"
+                  class="button button-primary"
+                  :disabled="quickStudentSubmitting"
+                  @click="createStudentInline"
+                >
+                  {{ quickStudentSubmitting ? '新增中...' : '新增并选中' }}
+                </button>
+                <button type="button" class="button" @click="closeQuickStudentForm">取消</button>
               </div>
             </div>
           </div>
@@ -148,7 +196,7 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { createCourse, deleteCourse, fetchCourses, updateCourse } from '../api/courses'
-import { fetchStudents } from '../api/students'
+import { createStudent, fetchStudents } from '../api/students'
 import { fetchTeachers } from '../api/teachers'
 import { getErrorMessage } from '../api/http'
 
@@ -161,6 +209,8 @@ const message = ref('')
 const submitting = ref(false)
 const studentSearch = ref('')
 const studentPickerOpen = ref(false)
+const quickStudentOpen = ref(false)
+const quickStudentSubmitting = ref(false)
 
 const form = reactive({
   student_id: '',
@@ -176,6 +226,12 @@ const filters = reactive({
   date: '',
   student_id: '',
   teacher_id: ''
+})
+
+const quickStudent = reactive({
+  name: '',
+  status: '在读',
+  note: ''
 })
 
 const selectedStudent = computed(() => students.value.find((student) => student.id === Number(form.student_id)))
@@ -216,6 +272,7 @@ function selectStudent(student) {
   form.student_id = student.id
   studentSearch.value = student.name
   studentPickerOpen.value = false
+  quickStudentOpen.value = false
 }
 
 function clearSelectedStudent() {
@@ -224,10 +281,29 @@ function clearSelectedStudent() {
   studentPickerOpen.value = true
 }
 
+function resetQuickStudentForm() {
+  Object.assign(quickStudent, { name: '', status: '在读', note: '' })
+}
+
+function openQuickStudentForm() {
+  quickStudentOpen.value = true
+  studentPickerOpen.value = false
+  if (!quickStudent.name && studentSearch.value.trim()) {
+    quickStudent.name = studentSearch.value.trim()
+  }
+}
+
+function closeQuickStudentForm() {
+  quickStudentOpen.value = false
+  resetQuickStudentForm()
+}
+
 function resetForm() {
   editingId.value = null
   studentSearch.value = ''
   studentPickerOpen.value = false
+  quickStudentOpen.value = false
+  resetQuickStudentForm()
   Object.assign(form, {
     student_id: '',
     teacher_id: '',
@@ -243,6 +319,32 @@ async function loadBaseData() {
   const [studentRes, teacherRes] = await Promise.all([fetchStudents(), fetchTeachers()])
   students.value = studentRes.data
   teachers.value = teacherRes.data
+}
+
+async function createStudentInline() {
+  resetNotice()
+  if (!quickStudent.name) {
+    error.value = '请填写学生姓名。'
+    return
+  }
+
+  quickStudentSubmitting.value = true
+  try {
+    const res = await createStudent({
+      name: quickStudent.name,
+      status: quickStudent.status,
+      note: quickStudent.note || null
+    })
+    await loadBaseData()
+    const newStudent = students.value.find((student) => student.id === res.data.id) || res.data
+    selectStudent(newStudent)
+    resetQuickStudentForm()
+    message.value = `学生“${newStudent.name}”已新增并选中，可以继续排课。`
+  } catch (err) {
+    error.value = getErrorMessage(err, '学生新增失败。')
+  } finally {
+    quickStudentSubmitting.value = false
+  }
 }
 
 async function loadCourses() {
