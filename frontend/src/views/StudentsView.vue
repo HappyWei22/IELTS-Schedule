@@ -47,9 +47,12 @@
         <div class="toolbar">
           <input v-model.trim="keyword" placeholder="按姓名搜索学生" @keyup.enter="loadStudents" />
           <button class="button" @click="loadStudents">搜索</button>
+          <button class="button" :class="{ 'button-primary': selectionMode }" @click="toggleSelectionMode">
+            {{ selectionMode ? '退出多选' : '多选' }}
+          </button>
         </div>
 
-        <div class="bulk-toolbar">
+        <div v-if="selectionMode" class="bulk-toolbar">
           <strong>已选择 {{ selectedIds.length }} 名学生</strong>
           <select v-model="bulkStatus">
             <option value="">批量修改状态</option>
@@ -67,7 +70,7 @@
           <table>
             <thead>
               <tr>
-                <th class="select-cell">
+                <th v-if="selectionMode" class="select-cell">
                   <input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)" />
                 </th>
                 <th>姓名</th>
@@ -79,7 +82,7 @@
             </thead>
             <tbody>
               <tr v-for="student in students" :key="student.id">
-                <td class="select-cell">
+                <td v-if="selectionMode" class="select-cell">
                   <input v-model="selectedIds" type="checkbox" :value="student.id" />
                 </td>
                 <td data-label="姓名">{{ student.name }}</td>
@@ -92,7 +95,7 @@
                 </td>
               </tr>
               <tr v-if="students.length === 0">
-                <td colspan="6" class="empty">暂无学生</td>
+                <td :colspan="selectionMode ? 6 : 5" class="empty">暂无学生</td>
               </tr>
             </tbody>
           </table>
@@ -114,6 +117,7 @@ const error = ref('')
 const message = ref('')
 const submitting = ref(false)
 const bulkSubmitting = ref(false)
+const selectionMode = ref(false)
 const selectedIds = ref([])
 const bulkStatus = ref('')
 const bulkNote = ref('')
@@ -150,6 +154,15 @@ function toggleAll(checked) {
 
 function clearSelection() {
   selectedIds.value = []
+}
+
+function toggleSelectionMode() {
+  selectionMode.value = !selectionMode.value
+  if (!selectionMode.value) {
+    clearSelection()
+    bulkStatus.value = ''
+    bulkNote.value = ''
+  }
 }
 
 async function loadStudents() {
@@ -203,6 +216,8 @@ async function submitBulkUpdate() {
     message.value = `已批量修改 ${res.data.affected_count} 名学生。`
     bulkStatus.value = ''
     bulkNote.value = ''
+    selectionMode.value = false
+    selectedIds.value = []
     await loadStudents()
   } catch (err) {
     error.value = getErrorMessage(err, '批量修改学生失败。')
@@ -224,6 +239,7 @@ async function submitBulkDelete() {
     const res = await bulkDeleteStudents(selectedIds.value)
     message.value = `已批量删除 ${res.data.affected_count} 名学生。`
     selectedIds.value = []
+    selectionMode.value = false
     await loadStudents()
   } catch (err) {
     error.value = getErrorMessage(err, '批量删除学生失败。')

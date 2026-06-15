@@ -14,15 +14,38 @@
       <form class="panel form-panel" @submit.prevent="submitForm">
         <h2>{{ editingId ? '编辑课程' : '新增课程' }}</h2>
 
-        <label>
-          学生
-          <select v-model.number="form.student_id" required>
-            <option value="" disabled>请选择学生</option>
-            <option v-for="student in students" :key="student.id" :value="student.id">
-              {{ student.name }}
-            </option>
-          </select>
-        </label>
+        <div class="field-group">
+          <label for="course-student-search">学生</label>
+          <div class="search-picker">
+            <input
+              id="course-student-search"
+              v-model.trim="studentSearch"
+              autocomplete="off"
+              placeholder="输入学生姓名搜索"
+              @focus="studentPickerOpen = true"
+              @input="studentPickerOpen = true"
+            />
+            <div v-if="selectedStudent" class="selected-pill">
+              <span>已选：{{ selectedStudent.name }}</span>
+              <button type="button" class="link-button" @click="clearSelectedStudent">更换</button>
+            </div>
+            <div v-if="studentPickerOpen" class="search-results">
+              <button
+                v-for="student in filteredStudents"
+                :key="student.id"
+                type="button"
+                class="search-result"
+                @click="selectStudent(student)"
+              >
+                <strong>{{ student.name }}</strong>
+                <span>{{ student.phone || '无联系方式' }} · {{ student.status }}</span>
+              </button>
+              <div v-if="filteredStudents.length === 0" class="search-empty">
+                没有找到匹配学生，请先到学生管理新增。
+              </div>
+            </div>
+          </div>
+        </div>
 
         <label>
           老师
@@ -134,7 +157,7 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { createCourse, deleteCourse, fetchCourses, updateCourse } from '../api/courses'
 import { fetchStudents } from '../api/students'
 import { fetchTeachers } from '../api/teachers'
@@ -147,6 +170,8 @@ const editingId = ref(null)
 const error = ref('')
 const message = ref('')
 const submitting = ref(false)
+const studentSearch = ref('')
+const studentPickerOpen = ref(false)
 
 const form = reactive({
   student_id: '',
@@ -163,6 +188,17 @@ const filters = reactive({
   date: '',
   student_id: '',
   teacher_id: ''
+})
+
+const selectedStudent = computed(() => students.value.find((student) => student.id === Number(form.student_id)))
+const filteredStudents = computed(() => {
+  const keyword = studentSearch.value.trim().toLowerCase()
+  const list = keyword
+    ? students.value.filter((student) =>
+        [student.name, student.phone, student.status].some((value) => String(value || '').toLowerCase().includes(keyword))
+      )
+    : students.value
+  return list.slice(0, 8)
 })
 
 function resetNotice() {
@@ -192,8 +228,22 @@ function fillDefaultEndTime() {
   }
 }
 
+function selectStudent(student) {
+  form.student_id = student.id
+  studentSearch.value = student.name
+  studentPickerOpen.value = false
+}
+
+function clearSelectedStudent() {
+  form.student_id = ''
+  studentSearch.value = ''
+  studentPickerOpen.value = true
+}
+
 function resetForm() {
   editingId.value = null
+  studentSearch.value = ''
+  studentPickerOpen.value = false
   Object.assign(form, {
     student_id: '',
     teacher_id: '',
@@ -224,6 +274,10 @@ async function loadCourses() {
 
 async function submitForm() {
   resetNotice()
+  if (!form.student_id) {
+    error.value = '请先搜索并选择学生。'
+    return
+  }
   submitting.value = true
   try {
     const payload = {
@@ -251,6 +305,8 @@ async function submitForm() {
 function editCourse(course) {
   resetNotice()
   editingId.value = course.id
+  studentSearch.value = course.student_name
+  studentPickerOpen.value = false
   Object.assign(form, {
     student_id: course.student_id,
     teacher_id: course.teacher_id,

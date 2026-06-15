@@ -43,9 +43,12 @@
         <div class="toolbar">
           <input v-model.trim="keyword" placeholder="按姓名搜索老师" @keyup.enter="loadTeachers" />
           <button class="button" @click="loadTeachers">搜索</button>
+          <button class="button" :class="{ 'button-primary': selectionMode }" @click="toggleSelectionMode">
+            {{ selectionMode ? '退出多选' : '多选' }}
+          </button>
         </div>
 
-        <div class="bulk-toolbar">
+        <div v-if="selectionMode" class="bulk-toolbar">
           <strong>已选择 {{ selectedIds.length }} 位老师</strong>
           <input v-model.trim="bulkSubject" placeholder="批量修改科目" />
           <input v-model.trim="bulkNote" placeholder="批量备注，可选" />
@@ -58,7 +61,7 @@
           <table>
             <thead>
               <tr>
-                <th class="select-cell">
+                <th v-if="selectionMode" class="select-cell">
                   <input type="checkbox" :checked="allSelected" @change="toggleAll($event.target.checked)" />
                 </th>
                 <th>姓名</th>
@@ -70,7 +73,7 @@
             </thead>
             <tbody>
               <tr v-for="teacher in teachers" :key="teacher.id">
-                <td class="select-cell">
+                <td v-if="selectionMode" class="select-cell">
                   <input v-model="selectedIds" type="checkbox" :value="teacher.id" />
                 </td>
                 <td data-label="姓名">{{ teacher.name }}</td>
@@ -83,7 +86,7 @@
                 </td>
               </tr>
               <tr v-if="teachers.length === 0">
-                <td colspan="6" class="empty">暂无老师</td>
+                <td :colspan="selectionMode ? 6 : 5" class="empty">暂无老师</td>
               </tr>
             </tbody>
           </table>
@@ -105,6 +108,7 @@ const error = ref('')
 const message = ref('')
 const submitting = ref(false)
 const bulkSubmitting = ref(false)
+const selectionMode = ref(false)
 const selectedIds = ref([])
 const bulkSubject = ref('')
 const bulkNote = ref('')
@@ -133,6 +137,15 @@ function toggleAll(checked) {
 
 function clearSelection() {
   selectedIds.value = []
+}
+
+function toggleSelectionMode() {
+  selectionMode.value = !selectionMode.value
+  if (!selectionMode.value) {
+    clearSelection()
+    bulkSubject.value = ''
+    bulkNote.value = ''
+  }
 }
 
 async function loadTeachers() {
@@ -186,6 +199,8 @@ async function submitBulkUpdate() {
     message.value = `已批量修改 ${res.data.affected_count} 位老师。`
     bulkSubject.value = ''
     bulkNote.value = ''
+    selectionMode.value = false
+    selectedIds.value = []
     await loadTeachers()
   } catch (err) {
     error.value = getErrorMessage(err, '批量修改老师失败。')
@@ -207,6 +222,7 @@ async function submitBulkDelete() {
     const res = await bulkDeleteTeachers(selectedIds.value)
     message.value = `已批量删除 ${res.data.affected_count} 位老师。`
     selectedIds.value = []
+    selectionMode.value = false
     await loadTeachers()
   } catch (err) {
     error.value = getErrorMessage(err, '批量删除老师失败。')
